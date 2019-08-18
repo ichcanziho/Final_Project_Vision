@@ -5,7 +5,7 @@ from armich import*
 start = False
 coord = (200,200)
 int_arm_a, int_arm_b, float_scale, int_total_dis,int_upper,int_lower = 0,0,0,0,0,0
-data = pd.read_csv("currentArm.csv")
+data = pd.read_csv("calibrations/arms/current/currentArm.csv")
 int_arm_a = int(data.arm_a[0])
 int_arm_b = int(data.arm_b[0])
 float_scale = float(data.scale[0])
@@ -38,7 +38,7 @@ def b_Use():
             }
     data = pd.DataFrame(dict)
     print(data)
-    data.to_csv("currentArm.csv", index=None, header=True)
+    data.to_csv("calibrations/arms/current/currentArm.csv", index=None, header=True)
 def b_Save():
     global int_arm_a, int_arm_b, float_scale, int_total_dis
     dict = {"arm_a": [int_arm_a],

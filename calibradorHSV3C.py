@@ -20,13 +20,14 @@ from tkinter import filedialog
 from PIL import Image
 from PIL import ImageTk
 import pandas as pd
+datahsv = pd.read_csv("calibrations/colors/current/current.csv")
 
-hMin = [0,100,255,0]
-hMax = [0,100,255,0]
-sMin = [0,100,255,0]
-sMax = [0,100,255,0]
-vMin = [0,100,255,0]
-vMax = [0,100,255,0]
+hMin = [datahsv.hMin[0],datahsv.hMin[1],datahsv.hMin[2],0]
+hMax = [datahsv.hMax[0],datahsv.hMax[1],datahsv.hMax[2],0]
+sMin = [datahsv.sMin[0],datahsv.sMin[1],datahsv.sMin[2],0]
+sMax = [datahsv.sMax[0],datahsv.sMax[1],datahsv.sMax[2],0]
+vMin = [datahsv.vMin[0],datahsv.vMin[1],datahsv.vMin[2],0]
+vMax = [datahsv.vMax[0],datahsv.vMax[1],datahsv.vMax[2],0]
 
 # initialize a new tkinter window at a certain position on the screen + 500, + 400
 window = tk.Tk()
@@ -46,7 +47,7 @@ def nothing(x):
 # so you don't have to be calibrating all the time
 #this is done by opening the current.csv file with pandas and assigning its value to the default value at which the bar starts
 def makeBars():
-    datahsv = pd.read_csv("current.csv")
+    datahsv = pd.read_csv("calibrations/colors/current/current.csv")
     cv2.namedWindow('image')
     cv2.createTrackbar('Hue Min', 'image', datahsv.hMin[0], 255, nothing) #255 it's the maximum value that the bars are allowed to reach
     cv2.createTrackbar('Hue Max', 'image', datahsv.hMax[0], 255, nothing)
@@ -57,28 +58,22 @@ def makeBars():
 #the "use" function allows you to directly occupy the configuration that is currently available without saving the profile
 #like a new document, only what is registered in USE will be what is loaded at the time of starting a new session
 def use():
-    hMin = cv2.getTrackbarPos('Hue Min', 'image')
-    hMax = cv2.getTrackbarPos('Hue Max', 'image')
-    sMin = cv2.getTrackbarPos('Sat Min', 'image')
-    sMax = cv2.getTrackbarPos('Sat Max', 'image')
-    vMin = cv2.getTrackbarPos('Val Min', 'image')
-    vMax = cv2.getTrackbarPos('Val Max', 'image')
-    dict = {"hMin": [hMin],
-            "hMax": [hMax,],
-            "sMin": [sMin],
-            "sMax": [sMax],
-            "vMin": [vMin],
-            "vMax": [vMax]
+    global hMin, hMax, sMin, sMax, vMin, vMax
+    dict = {"hMin": [hMin[0], hMin[1], hMin[2]],
+            "hMax": [hMax[0], hMax[1], hMax[2]],
+            "sMin": [sMin[0], sMin[1], sMin[2]],
+            "sMax": [sMax[0], sMax[1], sMax[2]],
+            "vMin": [vMin[0], vMin[1], vMin[2]],
+            "vMax": [vMax[0], vMax[1], vMax[2]]
             }
     data = pd.DataFrame(dict)
-    data.to_csv("current.csv")
+    print(data)
+    data.to_csv("calibrations/colors/current/current.csv", index=None, header=True)
 #as its name indicates the "SAVE" function allows the user to save the color segmentation profile in a CSV file
 #where the user can choose which path to save the file as well as what its name will be, using the function
 # filedialog.asksaveasfilename () of tkinter
 def save():
     global hMin,hMax,sMin,sMax,vMin,vMax
-
-
     dict = {"hMin": [hMin[0],hMin[1],hMin[2]],
             "hMax":[hMax[0],hMax[1],hMax[2]],
             "sMin": [sMin[0],sMin[1],sMin[2]],
@@ -228,8 +223,8 @@ def show_frame():
 
     else:
 
-        lower = np.array([hMin[intMascara-1], sMin[intMascara-1], vMin[intMascara-1]])
-        upper = np.array([hMax[intMascara-1], sMax[intMascara-1], vMax[intMascara-1]])
+        lower = np.array([cv2.getTrackbarPos('Hue Min', 'image'), cv2.getTrackbarPos('Sat Min', 'image'), cv2.getTrackbarPos('Val Min', 'image')])
+        upper = np.array([cv2.getTrackbarPos('Hue Max', 'image'), cv2.getTrackbarPos('Sat Max', 'image'), cv2.getTrackbarPos('Val Max', 'image')])
 
         binarize = cv2.inRange(hsv, lower, upper)
 

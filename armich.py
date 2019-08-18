@@ -6,22 +6,26 @@ import cv2
 import numpy as np
 from math import sqrt,atan2,pi,asin,sin,cos,acos
 class DrawArm:
-    def __init__(self,bgr,lb):
+    def __init__(self, bgr, robot):
         self.bgr = bgr
-        self.lb = lb
-        self.armA = lb[0]
-        self.armB = lb[1]
-        self.UL = 0
-        self.LL = 0
-
+        self.robot = robot
+        self.armA,self.armB,self.scale,self.dis,self.UL,self.LL = robot[0],robot[1],robot[2],robot[3],robot[4],robot[5]
         self.rojo,self.verde,self.azul,self.amarillo,self.negro = (0, 0, 255),(0, 255, 0),(255, 0, 0),(0, 255, 255),(0, 0, 0)
         self.rad2deg,self.deg2grad  = (180 / pi),(pi / 180)
         self.interes = (0, 0)
-
         self.h, self.w = self.bgr.shape[:2]
         self.h,self.w = int(self.h / 2),int(self.w / 2)
         self.h0, self.w0 = 0, 0
         self.o_aux,self.o_real = (self.w0, self.h0),(self.w, self.h)
+
+    def setMask(self,limits):
+        self.hsv = cv2.cvtColor(self.bgr, cv2.COLOR_BGR2HSV)
+        mask1 = cv2.inRange(self.hsv, limits[0], limits[1])
+        mask2 = cv2.inRange(self.hsv, limits[2], limits[3])
+        mask3 = cv2.inRange(self.hsv, limits[4], limits[5])
+        binarize = cv2.add(mask1, mask2)
+        binarize = cv2.add(binarize, mask3)
+        self.mask = binarize
 
     def aux2real(self, POI):
         xr = POI[0] + self.w
@@ -101,12 +105,12 @@ class DrawArm:
         beta = self.getBeta(distanceRO)
         gamma = self.getGamma(alfa,beta)
         alfaRO = alfa+angleRO
-        gammaRO = angleRO-gamma
+        gammaRO = angleRO-alfa
         xbrazo1 = int(round(self.armA * cos(alfaRO * self.deg2grad), 0))
         ybrazo1 = int(round(self.armA * sin(alfaRO * self.deg2grad), 0))
         brazo1= (xbrazo1, ybrazo1)
-        xbrazo2 = int(round(self.armB * cos(gammaRO * self.deg2grad), 0))
-        ybrazo2 = int(round(self.armB * sin(gammaRO * self.deg2grad), 0))
+        xbrazo2 = int(round(self.armA * cos(gammaRO * self.deg2grad), 0))
+        ybrazo2 = int(round(self.armA * sin(gammaRO * self.deg2grad), 0))
         brazo2 = (xbrazo2,ybrazo2)
         return brazo1,brazo2
 
@@ -122,10 +126,47 @@ class DrawArm:
 
         cv2.circle(self.bgr, self.aux2real(POI), int(6), self.rojo, -1, cv2.LINE_AA)
 
+    def drawFrame(self):
+        #cv2.circle(self.bgr, self.aux2real(brazoA), int(6), self.amarillo, -1, cv2.LINE_AA)
+        cv2.line(self.bgr, (0, self.h), (2 * self.w, self.h), self.negro, 1, cv2.LINE_AA)
+        cv2.line(self.bgr, (self.w, 0), (self.w, 2 * self.h), self.negro, 1, cv2.LINE_AA)
+        cv2.circle(self.bgr, self.o_real, 235, self.rojo, 1, cv2.LINE_AA)
+        cv2.circle(self.bgr, self.o_real, self.UL, self.azul, 1, cv2.LINE_AA)
+        cv2.circle(self.bgr, self.o_real, self.LL, self.verde, 1, cv2.LINE_AA)
+
+class readArms:
+    def __init__(self):
+        pass
+    def makeArm(self):
+        dataArm = pd.read_csv("calibrations/arms/current/currentArm.csv")
+        arm_a = dataArm.arm_a[0]
+        arm_b = dataArm.arm_b[0]
+        scale = dataArm.scale[0]
+        distance = dataArm.distance[0]
+        ul = por2pix(dataArm.UL[0])
+        ll = por2pix(dataArm.LL[0])
+        return (arm_a,arm_b,scale,distance,ul,ll)
+
+class readHSV:
+    def __init__(self):
+        pass
+    def makeMask(self):
+        datahsv = pd.read_csv("calibrations/colors/current/current.csv")
+
+        lower1 = np.array([datahsv.hMin[0], datahsv.sMin[0], datahsv.vMin[0]])
+        upper1 = np.array([datahsv.hMax[0], datahsv.sMax[0], datahsv.vMax[0]])
+
+        lower2 = np.array([datahsv.hMin[1], datahsv.sMin[1], datahsv.vMin[1]])
+        upper2 = np.array([datahsv.hMax[1], datahsv.sMax[1], datahsv.vMax[1]])
+
+        lower3 = np.array([datahsv.hMin[2], datahsv.sMin[2], datahsv.vMin[2]])
+        upper3 = np.array([datahsv.hMax[2], datahsv.sMax[2], datahsv.vMax[2]])
+        return (lower1,upper1,lower2,upper2,lower3,upper3)
+
 def por2pix(dis):
     return int((235*dis)/100)
 
-fondo = cv2.imread("blanco.png")
-DA = DrawArm(fondo,[30,70])
+#fondo = cv2.imread("blanco.png")
+#DA = DrawArm(fondo,[30,70])
 #print(DA.getJoint((0,50)))
 #print("Hola")
