@@ -6,8 +6,9 @@ import cv2
 import numpy as np
 from math import sqrt,atan2,pi,asin,sin,cos,acos
 class DrawArm:
-    def __init__(self, bgr, robot):
+    def __init__(self, bgr, robot,tonos):
         self.bgr = bgr
+        self.mask = self.setMask(tonos)
         self.robot = robot
         self.armA,self.armB,self.scale,self.dis,self.UL,self.LL = robot[0],robot[1],robot[2],robot[3],robot[4],robot[5]
         self.rojo,self.verde,self.azul,self.amarillo,self.negro = (0, 0, 255),(0, 255, 0),(255, 0, 0),(0, 255, 255),(0, 0, 0)
@@ -25,7 +26,7 @@ class DrawArm:
         mask3 = cv2.inRange(self.hsv, limits[4], limits[5])
         binarize = cv2.add(mask1, mask2)
         binarize = cv2.add(binarize, mask3)
-        self.mask = binarize
+        return binarize
 
     def aux2real(self, POI):
         xr = POI[0] + self.w
@@ -45,11 +46,11 @@ class DrawArm:
 
         return int((235*dis)/100)
 
-    def workZone(self,POI,UL,LL):
+    def workZone(self,POI):
 
         dis = self.distance(self.o_aux,POI)
-        self.UL = UL
-        self.LL = LL
+        UL = self.UL
+        LL = self.LL
         angle = self.getAngle(POI)
 
         #print("Angle:",angle,"Cosx:",x,"Sinx:",y)
@@ -59,7 +60,7 @@ class DrawArm:
             #print(POI,"-",[x,y])
             cv2.circle(self.bgr, self.aux2real((x,y)), 10, (255, 0, 255), -1)
             armLeft, armRight = self.getJoint((x,y))
-            self.drawArms(armLeft, armRight, (x,y), DA.verde,self.azul)
+            self.drawArms(armLeft, armRight, (x,y), self.verde,self.azul)
             return "OUT UP"
         elif dis < LL:
             x = int(cos(angle * self.deg2grad) * LL)
@@ -67,12 +68,12 @@ class DrawArm:
             # print(POI,"-",[x,y])
             cv2.circle(self.bgr, self.aux2real((x, y)), 10, (255, 0, 255), -1)
             armLeft, armRight = self.getJoint((x, y))
-            self.drawArms(armLeft, armRight, (x, y), DA.verde,self.azul)
+            self.drawArms(armLeft, armRight, (x, y), self.verde,self.azul)
             return "OUT IN"
         else:
             cv2.circle(self.bgr, self.aux2real(POI), 10, (255, 0, 255), -1)
             armLeft, armRight = self.getJoint(POI)
-            self.drawArms(armLeft, armRight, POI, DA.verde,self.azul)
+            self.drawArms(armLeft, armRight, POI, self.verde,self.azul)
             return "ok"
 
     def distance(self,p1, p2):
@@ -126,6 +127,10 @@ class DrawArm:
 
         cv2.circle(self.bgr, self.aux2real(POI), int(6), self.rojo, -1, cv2.LINE_AA)
 
+    def drawArmsVideo(self):
+        self.getPOI()
+        self.drawArms(self.armA,self.armB,self.interes,self.azul,self.verde)
+
     def drawFrame(self):
         #cv2.circle(self.bgr, self.aux2real(brazoA), int(6), self.amarillo, -1, cv2.LINE_AA)
         cv2.line(self.bgr, (0, self.h), (2 * self.w, self.h), self.negro, 1, cv2.LINE_AA)
@@ -134,15 +139,27 @@ class DrawArm:
         cv2.circle(self.bgr, self.o_real, self.UL, self.azul, 1, cv2.LINE_AA)
         cv2.circle(self.bgr, self.o_real, self.LL, self.verde, 1, cv2.LINE_AA)
 
+    def getPOI(self):
+        moments = cv2.moments(self.mask)
+        area = moments['m00']
+        x = int(moments['m10'] / moments['m00'])
+        y = int(moments['m01'] / moments['m00'])
+        cv2.rectangle(self.bgr, (x, y), (x + 2, y + 2), (255, 0, 0), 2)
+        cv2.line(self.bgr, self.o_real, (x, y), (0, 255, 0), 1, cv2.LINE_AA)
+        x0, y0 = self.real2aux((x, y))
+        self.interes=(x0,y0)
+        print(self.interes)
+        return (x0, y0)
+
 class readArms:
     def __init__(self):
         pass
     def makeArm(self):
         dataArm = pd.read_csv("calibrations/arms/current/currentArm.csv")
-        arm_a = dataArm.arm_a[0]
-        arm_b = dataArm.arm_b[0]
+        arm_a = por2pix(dataArm.arm_a[0])
+        arm_b = por2pix(dataArm.arm_b[0])
         scale = dataArm.scale[0]
-        distance = dataArm.distance[0]
+        distance = por2pix(dataArm.distance[0])
         ul = por2pix(dataArm.UL[0])
         ll = por2pix(dataArm.LL[0])
         return (arm_a,arm_b,scale,distance,ul,ll)

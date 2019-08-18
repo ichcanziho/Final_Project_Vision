@@ -123,7 +123,7 @@ def makeSliders():
 def drawLayout():
     fondo = cv2.imread("blanco.png")
 
-    DA = DrawArm(fondo,(por2pix(int_arm_a),por2pix(int_arm_b)))
+    DA = DrawArm(fondo,(por2pix(int_arm_a),por2pix(int_arm_b),float_scale,int_total_dis,por2pix(int_upper),por2pix(int_lower)),(0,0,0,0,0,0))
 
     cv2.line(fondo, (0, h), (2 * w, h), negro, 1, cv2.LINE_AA)
     cv2.line(fondo, (w, 0), (w, 2 * h), negro, 1, cv2.LINE_AA)
@@ -135,7 +135,7 @@ def drawLayout():
 
     coordAux = DA.real2aux(coord)
 
-    message = DA.workZone(coordAux,DA.por2pix(posUpperSlider),DA.por2pix(posLowerSlider))
+    message = DA.workZone(coordAux)
     #print(coordAux)
     cv2.putText(fondo, str(coordAux), (10, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.5, azul, lineType=cv2.LINE_AA)
 

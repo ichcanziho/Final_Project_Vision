@@ -13,11 +13,12 @@ _, fondo = video.read()
 while(1):
     try:
         _, fondo = video.read()
-        da = DrawArm(fondo,arms)
+        fondo = cv2.flip(fondo, 1)
+        da = DrawArm(fondo,arms,tones)
+        bin = da.setMask(tones)
         da.drawFrame()
-        #db = DibujarBrazo(tonos, fondo, longitud_brazo)
-        #db.crearMarco()
-        #punto, distancia, angulo, joint1, joint2, angulo2 = db.getData()
+        POI=da.getPOI()
+        da.workZone(POI)
         cv2.imshow("Procesado",fondo)
         #puntos.append(punto)
         if cv2.waitKey(20) & 0xFF == 27:
