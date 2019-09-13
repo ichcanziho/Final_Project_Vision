@@ -37,6 +37,7 @@ final = True
 lbMascara = "Mascara 1"
 intMascara = 1
 cap = cv2.VideoCapture(0)
+#cap2 = cv2.VideoCapture(1)
 # sliders or bars that are created using openCV "createTrackbar" need a call to a function to do something
 #in this case the "nothing" function only occupies "pass" to indicate that the function is null
 def nothing(x):
@@ -191,18 +192,23 @@ def prev():
     cv2.setTrackbarPos('Sat Max', 'image', sMax[intMascara - 1])
     cv2.setTrackbarPos('Val Min', 'image', vMin[intMascara - 1])
     cv2.setTrackbarPos('Val Max', 'image', vMax[intMascara - 1])
+
 def show_frame():
     global final
     global hMin, hMax, sMin, sMax, vMin, vMax
     global lbMascara, intMascara
     #each frame recorded by the webcam is analyzed
     _, frame = cap.read()
+    #_,fr2 = cap2.read()
+    #fr2= cv2.flip(fr2,1)
+    #fr2 = cv2.resize(fr2, (320, 240))
     #this turns to make your visualization more natural
     frame = cv2.flip(frame, 1)
     #its size is modified to make the window smaller
     frame = cv2.resize(frame,(320,240))
     # change the way of interpreting color from BGR to HSV and save it in a new object called "hsv"
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
     if intMascara ==4:
         
         lower1 = np.array([hMin[0], sMin[0], vMin[0]])
@@ -228,18 +234,6 @@ def show_frame():
 
         binarize = cv2.inRange(hsv, lower, upper)
 
-    '''
-    # all HSV max and min values are obtained from the sliders position
-    hMin = cv2.getTrackbarPos('Hue Min', 'image')
-    hMax = cv2.getTrackbarPos('Hue Max', 'image')
-    sMin = cv2.getTrackbarPos('Sat Min', 'image')
-    sMax = cv2.getTrackbarPos('Sat Max', 'image')
-    vMin = cv2.getTrackbarPos('Val Min', 'image')
-    vMax = cv2.getTrackbarPos('Val Max', 'image')
-    # the lower and upper intervals are saved in numpy arrangements
-    lower = np.array([hMin, sMin, vMin])
-    upper = np.array([hMax, sMax, vMax])
-    '''
     # a mask is created that binarizes the image from the previously established ranges
 
     # The windows with the original box and the already binarized box are shown as well as the window with the sliders
@@ -247,6 +241,7 @@ def show_frame():
     cv2.putText(frame, lbMascara, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), lineType=cv2.LINE_AA)
 
     cv2.imshow("original",frame)
+    #cv2.imshow("cam2", fr2)
     cv2.moveWindow("original",200,100)
     cv2.imshow("masked", binarize)
     cv2.moveWindow("masked", 540, 100)

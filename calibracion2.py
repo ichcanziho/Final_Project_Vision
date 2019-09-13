@@ -3,6 +3,12 @@
 from armich import*
 
 start = False
+canWrite = False
+first = False
+record = False
+pointsRecorded = []
+stateColor = 1
+coordSave = (0,0)
 coord = (200,200)
 int_arm_a, int_arm_b, float_scale, int_total_dis,int_upper,int_lower = 0,0,0,0,0,0
 data = pd.read_csv("calibrations/arms/current/currentArm.csv")
@@ -100,14 +106,16 @@ bUse = ttk.Button(window, text="Use", command=b_Use).grid(row=3, column=1)
 bLoad = ttk.Button(window, text="Load", command=b_Load).grid(row=3, column=2)
 
 def on_mouse(event, x, y, flags, param):
-    global start
+    global start,canWrite,first
+    global coordSave
     pt = (x, y)
     global coord
     coord = pt
     if event == cv2.EVENT_LBUTTONDOWN:
         start = True
-        print("x = ", x)
-        print("y = ", y)
+        canWrite = True
+        first = True
+
     elif event == cv2.EVENT_LBUTTONUP:
         start = False
     elif start and event == cv2.EVENT_MOUSEMOVE:
@@ -121,9 +129,16 @@ def makeSliders():
 
 
 def drawLayout():
+    global canWrite, first,coordSave,stateColor,record,pointsRecorded
+    if cv2.waitKey(1) & 0xFF == ord('s'):
+        if stateColor == 1 or stateColor == 2 :
+            print("mal momento")
+        else:
+            print("grabar")
+            record = True
+            stateColor = 4
     fondo = cv2.imread("blanco.png")
 
-    DA = DrawArm(fondo,(por2pix(int_arm_a),por2pix(int_arm_b),float_scale,int_total_dis,por2pix(int_upper),por2pix(int_lower)),(0,0,0,0,0,0))
 
     cv2.line(fondo, (0, h), (2 * w, h), negro, 1, cv2.LINE_AA)
     cv2.line(fondo, (w, 0), (w, 2 * h), negro, 1, cv2.LINE_AA)
@@ -131,9 +146,35 @@ def drawLayout():
     posUpperSlider = cv2.getTrackbarPos('Upper', 'Draw')
     posLowerSlider = cv2.getTrackbarPos('Lower', 'Draw')
 
+    DA = DrawArm(fondo,(por2pix(int_arm_a),por2pix(int_arm_b),float_scale,int_total_dis,por2pix(posUpperSlider),por2pix(posLowerSlider)),(0,0,0,0,0,0))
 
 
+    DA.circleState(stateColor)
     coordAux = DA.real2aux(coord)
+
+    if stateColor == 4:
+        pointsRecorded.append(coordAux)
+        if cv2.waitKey(1) & 0xFF == ord('d'):
+            #print("entre chido")
+            export_file_path = filedialog.asksaveasfilename(defaultextension='.npy')
+            np.save(export_file_path, pointsRecorded)
+            stateColor = 5
+
+
+    if canWrite:
+        #print("si")
+        if record == False:
+            if coordAux == coordSave:
+                stateColor = 3
+            else:
+                stateColor = 2
+        if first:
+            coordSave = coordAux
+            stateColor=2
+            print(coordSave)
+            first = False
+        message = DA.workZoneColor(coordSave,[130,130,130],[130,130,130])
+        #canWrite = False
 
     message = DA.workZone(coordAux)
     #print(coordAux)
@@ -142,8 +183,8 @@ def drawLayout():
     cv2.putText(fondo, message, (10, 260), cv2.FONT_HERSHEY_SIMPLEX, 0.5, azul, lineType=cv2.LINE_AA)
 
 
-    if posUpperSlider>98:
-        cv2.setTrackbarPos('Upper', 'Draw', 98)
+    if posUpperSlider>90:
+        cv2.setTrackbarPos('Upper', 'Draw', 90)
     if posUpperSlider<10:
         cv2.setTrackbarPos('Upper', 'Draw', 10)
 
@@ -166,7 +207,7 @@ def drawLayout():
     cv2.putText(fondo, str(disUpper), (320, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, azul, lineType=cv2.LINE_AA)
     cv2.putText(fondo, str(disLower), (320, y2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, verde, lineType=cv2.LINE_AA)
     cv2.imshow('Draw', fondo)
-    window.after(10, drawLayout)
+    window.after(1, drawLayout)
 
 makeSliders()
 drawLayout()
