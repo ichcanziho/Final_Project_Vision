@@ -151,9 +151,9 @@ def drawLayout():
 
     DA.circleState(stateColor)
     coordAux = DA.real2aux(coord)
-
+    message,realPoint = DA.workZone(coordAux)
     if stateColor == 4:
-        pointsRecorded.append(coordAux)
+        pointsRecorded.append(realPoint)
         if cv2.waitKey(1) & 0xFF == ord('d'):
             #print("entre chido")
             export_file_path = filedialog.asksaveasfilename(defaultextension='.npy')
@@ -176,7 +176,7 @@ def drawLayout():
         message = DA.workZoneColor(coordSave,[130,130,130],[130,130,130])
         #canWrite = False
 
-    message = DA.workZone(coordAux)
+
     #print(coordAux)
     cv2.putText(fondo, str(coordAux), (10, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.5, azul, lineType=cv2.LINE_AA)
 

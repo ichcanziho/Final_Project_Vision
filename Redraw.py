@@ -9,7 +9,7 @@ moveUp, moveDown,pintar = True, False,True
 datos = [[100,100]]
 def makeSliders():
     cv2.namedWindow(ventana)
-    cv2.createTrackbar('Time', ventana, 0, 100, nothing)
+    cv2.createTrackbar('Time', ventana, 0, 99, nothing)
 
 def nothing(x):
     pass
@@ -70,7 +70,8 @@ def update():
     time = cv2.getTrackbarPos('Time', ventana)
     time = round((time * len(datos))/100)
     #ED.getPoint(3, ED.morado, datos[time])
-
+    if time == len(datos):
+        time = time-1
     if time != currentTime:
         lastTime = time
         moveChido = True
@@ -97,8 +98,7 @@ def update():
         else:
             ED.getPoint(5, ED.blanco, datos[time])
 
-    if time == len(datos):
-        time = time-1
+
 
     #cv2.putText(fondo, str(time), (10, 260), cv2.FONT_HERSHEY_SIMPLEX, 0.5, ED.azul, lineType=cv2.LINE_AA)
     ED.drawFrame()

@@ -151,7 +151,7 @@ class DrawArm:
             cv2.circle(self.bgr, self.aux2real((x,y)), 10, (255, 0, 255), -1)
             armLeft, armRight = self.getJoint((x,y))
             self.drawArms(armLeft, armRight, (x,y), self.verde,self.azul,self.amarillo)
-            return "OUT UP"
+            return "OUT UP" , (x,y)
         elif dis < LL:
             x = int(cos(angle * self.deg2grad) * LL)
             y = int(sin(angle * self.deg2grad) * LL)
@@ -159,12 +159,12 @@ class DrawArm:
             cv2.circle(self.bgr, self.aux2real((x, y)), 10, (255, 0, 255), -1)
             armLeft, armRight = self.getJoint((x, y))
             self.drawArms(armLeft, armRight, (x, y), self.verde,self.azul,self.amarillo)
-            return "OUT IN"
+            return "OUT IN" , (x,y)
         else:
             cv2.circle(self.bgr, self.aux2real(POI), 10, (255, 0, 255), -1)
             armLeft, armRight = self.getJoint(POI)
             self.drawArms(armLeft, armRight, POI, self.verde,self.azul,self.amarillo)
-            return "ok"
+            return "ok" , (POI)
 
     def distance(self,p1, p2):
         return sqrt(pow(p2[0] - p1[0], 2) + pow(p2[1] - p1[1], 2))
