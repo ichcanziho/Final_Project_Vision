@@ -273,7 +273,6 @@ class readHSV:
 def por2pix(dis):
     return int((235*dis)/100)
 
-
 def CVTRGB2HSV(rgb):
     r =  rgb[0]/255
     g = rgb[1] / 255
@@ -298,178 +297,14 @@ def CVTRGB2HSV(rgb):
 
     return round(h,1),round(s,1),round(v,1)
 
-class EasyDraw:
-    azul = (255, 0, 0)
-    rojo = (0, 0, 255)
-    verde = (0, 255, 0)
-    amarillo = (0, 255, 255)
-    morado = (255, 0, 255)
-    blanco = (255, 255, 255)
+class EasyDraw(DrawArm):
+    azul,rojo,verde,amarillo,morado,blanco  = (255, 0, 0),(0, 0, 255),(0, 255, 0),(0, 255, 255),(255, 0, 255),(255, 255, 255)
     def __init__(self,bgr,robot):
-        self.bgr = bgr
-        self.armA, self.armB, self.scale, self.dis, self.UL, self.LL = robot[0], robot[1], robot[2], robot[3], robot[4], robot[5]
-        self.rojo, self.verde, self.azul, self.amarillo, self.negro, self.gris, self.naranja, self.azulito = (0, 0, 255),(0, 255, 0),(255, 0, 0),(0, 255, 255),(0, 0, 0),(130,130,130),(166,94,46),(132,195,190)
-        self.rad2deg, self.deg2grad = (180 / pi), (pi / 180)
-        self.interes = (0, 0)
-        self.h, self.w = self.bgr.shape[:2]
-        self.h, self.w = int(self.h / 2), int(self.w / 2)
-        self.h0, self.w0 = 0, 0
-        self.o_aux, self.o_real = (self.w0, self.h0), (self.w, self.h)
+        DrawArm.__init__(self,bgr,robot,[0,0,0,0,0,0])
 
-    def drawFrame(self):
-        #cv2.circle(self.bgr, self.aux2real(brazoA), int(6), self.amarillo, -1, cv2.LINE_AA)
-        cv2.line(self.bgr, (0, self.h), (2 * self.w, self.h), self.negro, 1, cv2.LINE_AA)
-        cv2.line(self.bgr, (self.w, 0), (self.w, 2 * self.h), self.negro, 1, cv2.LINE_AA)
-        cv2.circle(self.bgr, self.o_real, 235, self.rojo, 1, cv2.LINE_AA)
-        cv2.circle(self.bgr, self.o_real, self.UL, self.azul, 1, cv2.LINE_AA)
-        cv2.circle(self.bgr, self.o_real, self.LL, self.verde, 1, cv2.LINE_AA)
-
-    def aux2real(self, POI):
-        xr = POI[0] + self.w
-        yr = self.h - POI[1]
-        return xr, yr
-
-    def real2aux(self, POI):
-        xf = POI[0] - self.w
-        yf = self.h - POI[1]
-        return xf, yf
-
-    def getPoint(self,tk,color,point):
-        cv2.circle(self.bgr, self.aux2real(point), tk, color, -1)
-
-    def drawArms(self, brazoA, brazoB, POI, color, color2, color3):
-        cv2.line(self.bgr, self.o_real, self.aux2real(brazoA), color, 2, cv2.LINE_AA)
-        cv2.circle(self.bgr, self.aux2real(brazoA), int(6), color3, -1, cv2.LINE_AA)
-        cv2.line(self.bgr, self.aux2real(brazoA), self.aux2real(POI), color2, 2, cv2.LINE_AA)
-
-        cv2.line(self.bgr, self.o_real, self.aux2real(brazoB), color2, 2, cv2.LINE_AA)
-        cv2.circle(self.bgr, self.aux2real(brazoB), int(6), color3, -1, cv2.LINE_AA)
-        cv2.line(self.bgr, self.aux2real(brazoB), self.aux2real(POI), color, 2, cv2.LINE_AA)
-
-        cv2.circle(self.bgr, self.aux2real(POI), int(6), self.rojo, -1, cv2.LINE_AA)
-
-    def drawArmsVideo(self,poi):
+    def drawRobot(self,poi):
         armLeft, armRight = self.getJoint(poi)
         self.drawArms(armLeft, armRight, poi, self.verde, self.azul, self.amarillo)
 
-
-    def distance(self,p1, p2):
-        return sqrt(pow(p2[0] - p1[0], 2) + pow(p2[1] - p1[1], 2))
-
-    def getAngle(self,POI):
-        return atan2(POI[1], POI[0]) * self.rad2deg
-
-    def getAlfa(self,distance):
-        d = distance
-        a = self.armA
-        b = self.armB
-        x = ((b ** 2) - (d ** 2) - (a ** 2)) / (-2 * d * a)
-        return acos(x) * self.rad2deg
-
-    def getBeta(self, distance):
-        d = distance
-        a = self.armA
-        b = self.armB
-        x = ((d ** 2) - (b ** 2) - (a ** 2)) / (-2 * b * a)
-        return acos(x) * self.rad2deg
-
-    def getGamma(self,alfa,beta):
-        return 180-alfa-beta
-
-    def getJoint(self,POI):
-        angleRO =self.getAngle(POI)
-        distanceRO = self.distance(self.o_aux,POI)
-        alfa = self.getAlfa(distanceRO)
-        beta = self.getBeta(distanceRO)
-        gamma = self.getGamma(alfa,beta)
-        alfaRO = alfa+angleRO
-        gammaRO = angleRO-alfa
-        xbrazo1 = int(round(self.armA * cos(alfaRO * self.deg2grad), 0))
-        ybrazo1 = int(round(self.armA * sin(alfaRO * self.deg2grad), 0))
-        brazo1= (xbrazo1, ybrazo1)
-        xbrazo2 = int(round(self.armA * cos(gammaRO * self.deg2grad), 0))
-        ybrazo2 = int(round(self.armA * sin(gammaRO * self.deg2grad), 0))
-        brazo2 = (xbrazo2,ybrazo2)
-        return brazo1,brazo2
-
-class Redraw:
-    azul = (255, 0, 0)
-    rojo = (0, 0, 255)
-    verde = (0, 255, 0)
-    amarillo = (0, 255, 255)
-    morado = (255,0,255)
-    blanco = (255,255,255)
-
-    # self.amarillo = (255, 255, 0)
-    def __init__(self,fondo,lb,interes):
-        self.fondo = fondo
-        self.lb = lb
-        self.rojo = (0,0,255)
-        self.verde = (0,255,0)
-        self.azul = (255,0,0)
-        self.amarillo= (0,255,255)
-        #self.amarillo = (255, 255, 0)
-        self.negro= (0,0,0)
-        self.rad2deg = 180/pi
-        self.deg2grad = pi/180
-        self.interes=interes
-        self.h, self.w = self.fondo.shape[:2]
-        self.h = int(self.h / 2)
-        self.w = int(self.w / 2)
-        self.h0, self.w0 = 0, 0
-        self.origen = (self.w0, self.h0)
-        self.origenReal = (self.w, self.h)
-
-    def getOrigenReal(self):
-        return self.origenReal
-
-    def crearMarco(self):
-        cv2.drawMarker(self.fondo, self.origenReal, self.rojo, markerType=2)
-        cv2.line(self.fondo, (0, self.h), (2 * self.w, self.h), self.negro, 1, cv2.LINE_AA)
-        cv2.line(self.fondo, (self.w, 0), (self.w, 2 * self.h), self.negro, 1, cv2.LINE_AA)
-        cv2.circle(self.fondo, self.origenReal, int(0.9 * 2 * self.lb), self.rojo, 1, cv2.LINE_AA)
-        cv2.circle(self.fondo, self.origenReal, int(0.1 * 2 * self.lb), self.rojo, 1, cv2.LINE_AA)
-        return self.fondo
-
-    def convertirReal(self,p1):
-        xr = p1[0] + self.w
-        yr = self.h - p1[1]
-        return xr, yr
-
-    def convertir(self,p1):
-        xf = p1[0] - self.w
-        yf = self.h - p1[1]
-        return xf, yf
-
-    def dibujarBrazo(self,brazoA, brazoB, color):
-        cv2.line(self.fondo, self.origenReal, self.convertirReal(brazoA), color, 2, cv2.LINE_AA)
-        cv2.circle(self.fondo, self.convertirReal(brazoA), int(6), self.amarillo, -1, cv2.LINE_AA)
-        cv2.line(self.fondo, self.convertirReal(brazoA), self.convertirReal(brazoB), color, 2, cv2.LINE_AA)
-
-    def distance(self,p1, p2):
-        return sqrt(pow(p2[0] - p1[0], 2) + pow(p2[1] - p1[1], 2))
-
-    def getDraw(self):
-        angle = atan2(self.interes[1], self.interes[0]) * self.rad2deg
-        dis = self.distance(self.origen, self.interes)
-        beta = 1 - ((dis ** 2) / (2 * (self.lb ** 2)))
-        beta = acos(beta) * self.rad2deg
-        anguloAyuda = beta
-        alfa = 90 - beta / 2
-        alfa = alfa + angle
-        xbrazo1 = int(round(self.lb * cos(alfa * self.deg2grad), 0))
-        ybrazo1 = int(round(self.lb * sin(alfa * self.deg2grad), 0))
-        brazo1 = (xbrazo1, ybrazo1)
-        self.dibujarBrazo(brazo1, self.interes, self.azul)
-        alfa = alfa - angle
-        alfa = angle - alfa
-        xbrazo3 = int(round(self.lb * cos(alfa * self.deg2grad), 0))
-        ybrazo3 = int(round(self.lb * sin(alfa * self.deg2grad), 0))
-        brazo3 = (xbrazo3, ybrazo3)
-        self.dibujarBrazo(brazo3, self.interes, self.verde)
-        cv2.circle(self.fondo, self.convertirReal(self.interes), 10, self.rojo, -1)
-
-    def getPoint(self,tk,color):
-        cv2.circle(self.fondo, self.convertirReal(self.interes), tk, color, -1)
-
-
+    def getPoint(self,tk,color,point):
+        cv2.circle(self.bgr, self.aux2real(point), tk, color, -1)

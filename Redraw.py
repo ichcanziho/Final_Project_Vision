@@ -6,7 +6,7 @@ lastTime = -1
 currentTime = 0
 moveChido = False
 moveUp, moveDown,pintar = True, False,True
-datos = [[100,100]]
+datos = [[0,0]]
 def makeSliders():
     cv2.namedWindow(ventana)
     cv2.createTrackbar('Time', ventana, 0, 99, nothing)
@@ -23,12 +23,13 @@ def openFile():
 def play():
     fondo = cv2.imread("blanco.png")
     ED = EasyDraw(fondo, arms)
+    #ED = EasyD(fondo, arms)
     ED.drawFrame()
     paso = round(len(datos)/100)
     cuentas = 0
     time = cv2.getTrackbarPos('Time', ventana)
     time = round((time * len(datos)) / 100)
-    print(time)
+
     for dato in range(len(datos)):
         #fondo = cv2.imread("blanco.png")
 
@@ -42,6 +43,7 @@ def play():
 def motion():
     fondo = cv2.imread("blanco.png")
     ED = EasyDraw(fondo, arms)
+    #ED = EasyD(fondo, arms)
     ED.drawFrame()
     paso = round(len(datos)/100)
     cuentas = 0
@@ -51,11 +53,12 @@ def motion():
     for dato in range(len(datos)):
         fondo = cv2.imread("blanco.png")
         ED = EasyDraw(fondo, arms)
+        #ED = EasyD(fondo, arms)
         ED.drawFrame()
         if dato % paso ==0:
             cuentas+=1
         cv2.setTrackbarPos('Time', ventana, cuentas)
-        ED.drawArmsVideo(datos[dato])
+        ED.drawRobot(datos[dato])
         cv2.imshow(ventana, fondo)
         cv2.waitKey(10)
 
@@ -66,7 +69,7 @@ def update():
     #fondo = cv2.imread("blanco.png")
 
     ED = EasyDraw(fondo, arms)
-
+    #ED = EasyD(fondo, arms)
     time = cv2.getTrackbarPos('Time', ventana)
     time = round((time * len(datos))/100)
     #ED.getPoint(3, ED.morado, datos[time])
@@ -81,14 +84,12 @@ def update():
 
     if moveChido:
         if lastTime > currentTime:
-            print("derecha")
             for i in range(currentTime,lastTime+1):
                 ED.getPoint(3, ED.morado, datos[i])
 
 
             pintar =True
         elif lastTime < currentTime:
-            print("izquierda")
             pintar = False
             for e in range(lastTime,currentTime+1):
                 ED.getPoint(5, ED.blanco, datos[e])
@@ -109,6 +110,7 @@ def update():
 if __name__ == "__main__":
     fondo = cv2.imread("blanco.png")
     ED = EasyDraw(fondo,arms)
+    #ED = EasyD(fondo, arms)
     #datos = np.load("pipe.npy")
     window = tk.Tk()
     window.title("Options")
