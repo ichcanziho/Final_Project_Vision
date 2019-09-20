@@ -84,7 +84,7 @@ def save():
             }
     data = pd.DataFrame(dict)
     print(data)
-    export_file_path = filedialog.asksaveasfilename(defaultextension='.csv')
+    export_file_path = filedialog.asksaveasfilename(initialdir ="calibrations/colors/user profile",defaultextension='.csv')
     data.to_csv(export_file_path, index=None, header=True)
 #default returns all the sliders values to their initial default position, these values can be modified
 #in the default.csv file
@@ -100,7 +100,7 @@ def default():
 # filedialog.askopenfilename () of tikinter to occupy the windows file explorer
 def load():
     global hMin, hMax, sMin, sMax, vMin, vMax
-    open_file = filedialog.askopenfilename()
+    open_file = filedialog.askopenfilename(initialdir ="calibrations/colors/user profile")
     datahsv = pd.read_csv(open_file)
     cv2.setTrackbarPos('Hue Min', 'image', datahsv.hMin[0])
     cv2.setTrackbarPos('Hue Max', 'image', datahsv.hMax[0])

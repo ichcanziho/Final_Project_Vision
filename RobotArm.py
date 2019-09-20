@@ -1,6 +1,7 @@
 
 
 from armich import*
+import datetime
 
 start = False
 canWrite = False
@@ -8,8 +9,8 @@ first = False
 record = False
 pointsRecorded = []
 stateColor = 1
-coordSave = (0,0)
-coord = (200,200)
+coordSave = [0,0]
+coord = [200,200]
 int_arm_a, int_arm_b, float_scale, int_total_dis,int_upper,int_lower = 0,0,0,0,0,0
 data = pd.read_csv("calibrations/arms/current/currentArm.csv")
 int_arm_a = int(data.arm_a[0])
@@ -19,11 +20,16 @@ int_total_dis = int(data.distance[0])
 int_upper = int(data.UL[0])
 int_lower = int(data.LL[0])
 
+icx = data.ICX[0]
+icy = data.ICY[0]
+init_Coord=[icx,icy]
+
+
 
 def nothing(x):
     pass
 def b_Use():
-    global int_arm_a, int_arm_b, float_scale, int_total_dis
+    global int_arm_a, int_arm_b, float_scale, int_total_dis,coordSave
 
     if arm_A.get() != "":
         labelA.configure(text='A = ' + arm_A.get())
@@ -40,27 +46,32 @@ def b_Use():
             "scale": [float_scale],
             "distance": [int_total_dis],
             "UL": [cv2.getTrackbarPos('Upper', 'Draw')],
-            "LL": [cv2.getTrackbarPos('Lower', 'Draw')]
+            "LL": [cv2.getTrackbarPos('Lower', 'Draw')],
+            "ICX":[coordSave[0]],
+            "ICY":[coordSave[1]]
             }
     data = pd.DataFrame(dict)
     print(data)
     data.to_csv("calibrations/arms/current/currentArm.csv", index=None, header=True)
 def b_Save():
-    global int_arm_a, int_arm_b, float_scale, int_total_dis
+    global int_arm_a, int_arm_b, float_scale, int_total_dis,coordSave
     dict = {"arm_a": [int_arm_a],
             "arm_b": [int_arm_b],
             "scale": [float_scale],
             "distance": [int_total_dis],
-            "UL": [95],
-            "LL": [5]
+            "UL": [cv2.getTrackbarPos('Upper', 'Draw')],
+            "LL": [cv2.getTrackbarPos('Lower', 'Draw')],
+            "ICX": [coordSave[0]],
+            "ICY": [coordSave[1]]
             }
     data = pd.DataFrame(dict)
     print(data)
-    export_file_path = filedialog.asksaveasfilename(defaultextension='.csv')
+    export_file_path = filedialog.asksaveasfilename(initialdir ="calibrations/arms/user profile",defaultextension='.csv')
     data.to_csv(export_file_path, index=None, header=True)
 def b_Load():
-    global int_arm_a, int_arm_b, float_scale, int_total_dis
-    open_file = filedialog.askopenfilename()
+    global int_arm_a, int_arm_b, float_scale, int_total_dis,int_upper,int_lower,coordSave,init_Coord,stateColor
+    stateColor = 1
+    open_file = filedialog.askopenfilename(initialdir ="calibrations/arms/user profile" )
     data = pd.read_csv(open_file)
     labelA.configure(text='A = ' + str(data.arm_a[0]))
     labelB.configure(text='B = ' + str(data.arm_b[0]))
@@ -69,6 +80,16 @@ def b_Load():
     int_arm_b = int(data.arm_b[0])
     float_scale = float(data.scale[0])
     int_total_dis = int(data.distance[0])
+    int_upper = int(data.UL[0])
+    cv2.setTrackbarPos('Upper', 'Draw', int_upper)
+    int_lower = int(data.LL[0])
+    cv2.setTrackbarPos('Lower', 'Draw', int_lower)
+    coordSave[0] = int(data.ICX[0])
+    coordSave[1] = int(data.ICY[0])
+    init_Coord = coordSave
+    arm_A.set(str(int_arm_a))
+    arm_B.set(str(int_arm_b))
+    scale.set(str(float_scale))
 
 window = tk.Tk()
 
@@ -130,13 +151,8 @@ def makeSliders():
 
 def drawLayout():
     global canWrite, first,coordSave,stateColor,record,pointsRecorded
-    if cv2.waitKey(1) & 0xFF == ord('s'):
-        if stateColor == 1 or stateColor == 2 :
-            print("mal momento")
-        else:
-            print("grabar")
-            record = True
-            stateColor = 4
+    radio = 5
+
     fondo = cv2.imread("blanco.png")
 
 
@@ -147,11 +163,97 @@ def drawLayout():
     posLowerSlider = cv2.getTrackbarPos('Lower', 'Draw')
 
     DA = DrawArm(fondo,(por2pix(int_arm_a),por2pix(int_arm_b),float_scale,int_total_dis,por2pix(posUpperSlider),por2pix(posLowerSlider)),(0,0,0,0,0,0))
+    coordAux = DA.real2aux(coord)
+    message, realPoint = DA.workZone(coordAux)
 
+    if cv2.waitKey(1) & 0xFF == ord('s'):
+        print("picado")
+        #cv2.imwrite("images/snapshot/chido.png", fondo)
+        if stateColor == 3:
+            stateColor = 4
+    if stateColor == 4:
+        pointsRecorded.append(realPoint)
+        if cv2.waitKey(1) & 0xFF == ord('d'):
+            print("dejado")
+            export_file_path = filedialog.asksaveasfilename(initialdir ="Trajectories",defaultextension='.npy')
+            np.save(export_file_path, pointsRecorded)
+
+            #dirSS = "images/snapshot/"+save
+            #print(dirSS)
+
+            stateColor = 5
+
+    if stateColor == 5:
+        remake = cv2.imread("blanco.png")
+        robot = readArms()
+        arms = robot.makeArm()
+        ED = EasyDraw(remake, arms)
+        ED.drawFrame()
+        for dato in range(len(pointsRecorded)):
+            ED.getPoint(3, ED.morado, pointsRecorded[dato])
+            cv2.imshow("remake", remake)
+        #x = datetime.datetime.now()
+        #print(x)
+        #print(export_file_path)
+        name = getNameFromDirectory(export_file_path)
+
+        directorio = "images/snapshot/"+name+".png"
+        #print(directorio)
+        cv2.imwrite(directorio,remake)
+        stateColor=1
+
+    if not start:
+        if not canWrite:
+            message = DA.workZoneColor(init_Coord, DA.grisaceo, DA.grisaceo)
+            cA = np.array(coordAux)
+            cS = np.array(init_Coord)
+            if stateColor != 4 and stateColor != 5:
+                if abs(cA[0] - cS[0]) <= radio and abs(cA[1] - cS[1]) <= radio:
+                    stateColor = 3
+                else:
+                    stateColor =1
+        else:
+            if first:
+                coordSave = coordAux
+                first = False
+            message = DA.workZoneColor(coordSave, DA.grisaceo, DA.grisaceo)
+
+            cA = np.array(coordAux)
+            cS = np.array(coordSave)
+            if stateColor != 4 and stateColor != 5:
+                if abs(cA[0] - cS[0]) <= radio and abs(cA[1] - cS[1]) <= radio:
+                    stateColor = 3
+                else:
+                    stateColor = 1
+
+
+
+        """
+        if stateColor == 1 or stateColor == 2:
+            print("Can´t record")
+        else:
+            print("Record")
+            record = True
+            stateColor = 4
+            """
+    
+    DA.circleState(stateColor)
+
+    '''
+    if cv2.waitKey(1) & 0xFF == ord('s'):
+        if stateColor == 1 or stateColor == 2 :
+            print("Can´t record")
+        else:
+            print("Record")
+            record = True
+            stateColor = 4
+    if not canWrite:
+        message2 = DA.workZoneColor([0,100], DA.grisaceo, DA.grisaceo)
 
     DA.circleState(stateColor)
-    coordAux = DA.real2aux(coord)
-    message,realPoint = DA.workZone(coordAux)
+
+
+
     if stateColor == 4:
         pointsRecorded.append(realPoint)
         if cv2.waitKey(1) & 0xFF == ord('d'):
@@ -164,7 +266,12 @@ def drawLayout():
     if canWrite:
         #print("si")
         if record == False:
-            if coordAux == coordSave:
+            cA = np.array(coordAux)
+            cS = np.array(coordSave)
+            #if (cA[0] >= cS[0] * .9 and cA[0] <= cS[0] * 1.1):
+            #    if cA[1] >= cS[1] * .9 and cA[1] <= cS[1] * 1.1:
+            #if coordAux == coordSave:
+            if abs(cA[0]-cS[0])<=radio and abs(cA[1]-cS[1])<=radio:
                 stateColor = 3
             else:
                 stateColor = 2
@@ -173,11 +280,11 @@ def drawLayout():
             stateColor=2
             print(coordSave)
             first = False
-        message = DA.workZoneColor(coordSave,[130,130,130],[130,130,130])
+        message = DA.workZoneColor(coordSave,DA.grisaceo,DA.grisaceo)
         #canWrite = False
 
-
-    #print(coordAux)
+    '''
+        #print(coordAux)
     cv2.putText(fondo, str(coordAux), (10, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.5, azul, lineType=cv2.LINE_AA)
 
     cv2.putText(fondo, message, (10, 260), cv2.FONT_HERSHEY_SIMPLEX, 0.5, azul, lineType=cv2.LINE_AA)

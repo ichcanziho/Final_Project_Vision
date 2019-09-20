@@ -1,8 +1,15 @@
 from armich import*
 puntos,distancias,angulos,angulos2,joints1,joints2 = [],[],[],[],[],[]
+pointsRecorded=[]
 mask = readHSV()
 robot = readArms()
 arms = robot.makeArm()
+stateColor = 1
+start,canWrite = False, False
+radio = 5
+coordInit = arms[6]
+
+print(coordInit)
 tones = mask.makeMask()
 longitud_brazo = 160
 
@@ -19,7 +26,46 @@ while(1):
         da.getColor(bin)
         da.drawFrame()
         POI=da.getPOI()
-        da.workZone(POI)
+        _,realPoint=da.workZone(POI)
+        message = da.workZoneColor(coordInit, da.grisaceo, da.grisaceo)
+        da.circleState(stateColor)
+
+        if cv2.waitKey(1) & 0xFF == ord('s'):
+            print("picado")
+            if stateColor == 3:
+                stateColor = 4
+        if stateColor == 4:
+            pointsRecorded.append(realPoint)
+            if cv2.waitKey(1) & 0xFF == ord('d'):
+                print("dejado")
+                export_file_path = filedialog.asksaveasfilename(initialdir ="Trajectories",defaultextension='.npy')
+                np.save(export_file_path, pointsRecorded)
+                stateColor = 5
+        if stateColor == 5:
+            remake = cv2.imread("blanco.png")
+            robot = readArms()
+            arms = robot.makeArm()
+            ED = EasyDraw(remake, arms)
+            ED.drawFrame()
+            for dato in range(len(pointsRecorded)):
+                ED.getPoint(3, ED.morado, pointsRecorded[dato])
+                cv2.imshow("remake", remake)
+            name = getNameFromDirectory(export_file_path)
+            directorio = "images/snapshot/" + name + ".png"
+            cv2.imwrite(directorio, remake)
+            stateColor = 1
+
+        if not start:
+            if not canWrite:
+                message = da.workZoneColor(coordInit, da.grisaceo, da.grisaceo)
+                cA = np.array(POI)
+                cS = np.array(coordInit)
+                if stateColor != 4 and stateColor != 5:
+                    if abs(cA[0] - cS[0]) <= radio and abs(cA[1] - cS[1]) <= radio:
+                        stateColor = 3
+                    else:
+                        stateColor = 1
+
         cv2.imshow("Procesado",fondo)
         #cv2.imshow("mask", bin)
         #puntos.append(punto)
@@ -33,6 +79,6 @@ while(1):
         da.drawFrame()
         da.workZone(POI)
         cv2.imshow("Procesado", fondo)
-        cv2.imshow("mask", bin)
+        #cv2.imshow("mask", bin)
 video.release()
 cv2.destroyAllWindows()

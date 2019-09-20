@@ -1,4 +1,6 @@
 from armich import *
+from PIL import  Image,ImageTk
+from tkinter import Label
 import time as TIME
 robot = readArms()
 arms = robot.makeArm()
@@ -16,8 +18,18 @@ def nothing(x):
 
 def openFile():
     global  datos
-    open_file = filedialog.askopenfilename()
+    open_file = filedialog.askopenfilename(initialdir ="Trajectories")
     datos = np.load(open_file)
+
+    file = getNameFromDirectory(open_file)
+
+    nf = "images/snapshot/"+file+".png"
+    im = Image.open(nf)
+    resized = im.resize((int(640/4), int(480/4)), Image.ANTIALIAS)
+    tkimage = ImageTk.PhotoImage(resized)
+    myvar = Label(window, image=tkimage)
+    myvar.image = tkimage
+    myvar.grid(row=2, column=2)
 
 
 def play():

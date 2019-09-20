@@ -13,6 +13,7 @@ class DrawArm:
         self.robot = robot
         self.armA,self.armB,self.scale,self.dis,self.UL,self.LL = robot[0],robot[1],robot[2],robot[3],robot[4],robot[5]
         self.rojo,self.verde,self.azul,self.amarillo,self.negro,self.gris,self.naranja,self.azulito = (0, 0, 255),(0, 255, 0),(255, 0, 0),(0, 255, 255),(0, 0, 0),(130,130,130),(166,94,46),(132,195,190)         ##
+        self.grisaceo=(130,130,130)
         self.rad2deg,self.deg2grad  = (180 / pi),(pi / 180)
         self.interes = (0, 0)
         self.h, self.w = self.bgr.shape[:2]
@@ -252,7 +253,10 @@ class readArms:
         distance = por2pix(dataArm.distance[0])
         ul = por2pix(dataArm.UL[0])
         ll = por2pix(dataArm.LL[0])
-        return (arm_a,arm_b,scale,distance,ul,ll)
+        icx= dataArm.ICX[0]
+        icy=dataArm.ICY[0]
+        iniCoord = [icx,icy]
+        return (arm_a,arm_b,scale,distance,ul,ll,iniCoord)
 
 class readHSV:
     def __init__(self):
@@ -308,3 +312,8 @@ class EasyDraw(DrawArm):
 
     def getPoint(self,tk,color,point):
         cv2.circle(self.bgr, self.aux2real(point), tk, color, -1)
+
+def getNameFromDirectory(s):
+    z = s[::-1]
+    n = z.index("/")
+    return s[len(s)-n:-4]
