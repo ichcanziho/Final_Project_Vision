@@ -317,3 +317,11 @@ def getNameFromDirectory(s):
     z = s[::-1]
     n = z.index("/")
     return s[len(s)-n:-4]
+
+def changeWord(dir,word,rep,carp=''):
+    rep = word+rep+".npy"
+    word+=".npy"
+    dir = dir.replace(word, '')
+    dir+=carp
+    dir+=rep
+    return dir

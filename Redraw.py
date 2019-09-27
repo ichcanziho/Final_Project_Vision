@@ -9,6 +9,7 @@ currentTime = 0
 moveChido = False
 moveUp, moveDown,pintar = True, False,True
 datos = [[0,0]]
+datosLimpioColor = [0]
 def makeSliders():
     cv2.namedWindow(ventana)
     cv2.createTrackbar('Time', ventana, 0, 99, nothing)
@@ -17,11 +18,15 @@ def nothing(x):
     pass
 
 def openFile():
-    global  datos
+    global  datos,datosLimpioColor
     open_file = filedialog.askopenfilename(initialdir ="Trajectories")
     datos = np.load(open_file)
 
     file = getNameFromDirectory(open_file)
+    import_file_path_colors = changeWord(open_file, file, "Colors","Colors/")
+
+    datosColor = np.load(import_file_path_colors)
+    datosLimpioColor = datosColor.tolist()
 
     nf = "images/snapshot/"+file+".png"
     im = Image.open(nf)
@@ -48,7 +53,13 @@ def play():
         if dato % paso ==0:
             cuentas+=1
         cv2.setTrackbarPos('Time', ventana, cuentas)
-        ED.getPoint(3, ED.morado, datos[dato])
+
+        if datosLimpioColor[dato]==0:
+            ED.getPoint(3, ED.morado, datos[dato])
+        elif datosLimpioColor[dato]==1:
+            ED.getPoint(3, ED.blanco, datos[dato])
+        else:
+            ED.getPoint(3, ED.azul, datos[dato])
         cv2.imshow(ventana, fondo)
         cv2.waitKey(10)
 
@@ -97,7 +108,13 @@ def update():
     if moveChido:
         if lastTime > currentTime:
             for i in range(currentTime,lastTime+1):
-                ED.getPoint(3, ED.morado, datos[i])
+                #ED.getPoint(3, ED.morado, datos[i])
+                if datosLimpioColor[i] == 0:
+                    ED.getPoint(3, ED.morado, datos[i])
+                elif datosLimpioColor[i] == 1:
+                    ED.getPoint(3, ED.blanco, datos[i])
+                else:
+                    ED.getPoint(3, ED.azul, datos[i])
 
 
             pintar =True
@@ -107,7 +124,13 @@ def update():
                 ED.getPoint(5, ED.blanco, datos[e])
     else:
         if pintar:
-            ED.getPoint(3, ED.morado, datos[time])
+            #ED.getPoint(3, ED.morado, datos[time])
+            if datosLimpioColor[time] == 0:
+                ED.getPoint(3, ED.morado, datos[time])
+            elif datosLimpioColor[time] == 1:
+                ED.getPoint(3, ED.blanco, datos[time])
+            else:
+                ED.getPoint(3, ED.azul, datos[time])
         else:
             ED.getPoint(5, ED.blanco, datos[time])
 

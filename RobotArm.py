@@ -8,9 +8,12 @@ canWrite = False
 first = False
 record = False
 pointsRecorded = []
+colorsRecorded = []
 stateColor = 1
 coordSave = [0,0]
 coord = [200,200]
+robot = readArms()
+arms = robot.makeArm()
 int_arm_a, int_arm_b, float_scale, int_total_dis,int_upper,int_lower = 0,0,0,0,0,0
 data = pd.read_csv("calibrations/arms/current/currentArm.csv")
 int_arm_a = int(data.arm_a[0])
@@ -24,7 +27,7 @@ icx = data.ICX[0]
 icy = data.ICY[0]
 init_Coord=[icx,icy]
 
-
+initialColor = 0
 
 def nothing(x):
     pass
@@ -150,7 +153,7 @@ def makeSliders():
 
 
 def drawLayout():
-    global canWrite, first,coordSave,stateColor,record,pointsRecorded
+    global canWrite, first,coordSave,stateColor,record,pointsRecorded,arms,initialColor
     radio = 5
 
     fondo = cv2.imread("blanco.png")
@@ -163,21 +166,43 @@ def drawLayout():
     posLowerSlider = cv2.getTrackbarPos('Lower', 'Draw')
 
     DA = DrawArm(fondo,(por2pix(int_arm_a),por2pix(int_arm_b),float_scale,int_total_dis,por2pix(posUpperSlider),por2pix(posLowerSlider)),(0,0,0,0,0,0))
+    ED = EasyDraw(fondo, arms)
+
     coordAux = DA.real2aux(coord)
     message, realPoint = DA.workZone(coordAux)
+
+    if cv2.waitKey(1) & 0xFF == ord('z'):
+        initialColor = 0
+    if cv2.waitKey(1) & 0xFF == ord('x'):
+        initialColor = 1
+    if cv2.waitKey(1) & 0xFF == ord('c'):
+        initialColor = 2
+
+    if initialColor ==0:
+        ED.getPoint(15,ED.morado,coordAux)
+    elif initialColor == 1:
+        ED.getPoint(15, ED.rojo, coordAux)
+    else:
+        ED.getPoint(15, ED.verde, coordAux)
 
     if cv2.waitKey(1) & 0xFF == ord('s'):
         print("picado")
         #cv2.imwrite("images/snapshot/chido.png", fondo)
         if stateColor == 3:
             stateColor = 4
+
     if stateColor == 4:
+        #save= [realPoint,initialColor]
         pointsRecorded.append(realPoint)
+        colorsRecorded.append(initialColor)
+        #pointsRecorded.append(save)
         if cv2.waitKey(1) & 0xFF == ord('d'):
             print("dejado")
             export_file_path = filedialog.asksaveasfilename(initialdir ="Trajectories",defaultextension='.npy')
             np.save(export_file_path, pointsRecorded)
-
+            file = getNameFromDirectory(export_file_path)
+            export_file_path_colors = changeWord(export_file_path,file,"Colors","Colors/")
+            np.save(export_file_path_colors, colorsRecorded)
             #dirSS = "images/snapshot/"+save
             #print(dirSS)
 
@@ -189,8 +214,16 @@ def drawLayout():
         arms = robot.makeArm()
         ED = EasyDraw(remake, arms)
         ED.drawFrame()
+        datos = np.load(export_file_path_colors)
+        datosLimpio = datos.tolist()
         for dato in range(len(pointsRecorded)):
-            ED.getPoint(3, ED.morado, pointsRecorded[dato])
+            if(datosLimpio[dato]==0):
+                ED.getPoint(3, ED.morado, pointsRecorded[dato])
+            elif(datosLimpio[dato]==1):
+                ED.getPoint(3, ED.grisaceo, pointsRecorded[dato])
+            else:
+                ED.getPoint(3, ED.azul, pointsRecorded[dato])
+            cv2.waitKey(10)
             cv2.imshow("remake", remake)
         #x = datetime.datetime.now()
         #print(x)
@@ -313,6 +346,10 @@ def drawLayout():
     y2 = int(240+disLower)
     cv2.putText(fondo, str(disUpper), (320, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, azul, lineType=cv2.LINE_AA)
     cv2.putText(fondo, str(disLower), (320, y2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, verde, lineType=cv2.LINE_AA)
+
+
+
+
     cv2.imshow('Draw', fondo)
     window.after(1, drawLayout)
 
@@ -320,3 +357,4 @@ makeSliders()
 drawLayout()
 
 window.mainloop()
+
