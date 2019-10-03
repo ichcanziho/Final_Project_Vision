@@ -1,10 +1,12 @@
 from armich import*
 puntos,distancias,angulos,angulos2,joints1,joints2 = [],[],[],[],[],[]
 pointsRecorded=[]
+colorsRecorded=[]
 mask = readHSV()
 robot = readArms()
 arms = robot.makeArm()
 stateColor = 1
+initialColor = 0
 start,canWrite = False, False
 radio = 5
 coordInit = arms[6]
@@ -22,6 +24,7 @@ while(1):
         _, fondo = video.read()
         fondo = cv2.flip(fondo, 1)
         da = DrawArm(fondo,arms,tones)
+        ED = EasyDraw(fondo, arms)
         bin = da.setMask(tones)
         da.getColor(bin)
         da.drawFrame()
@@ -30,16 +33,39 @@ while(1):
         message = da.workZoneColor(coordInit, da.grisaceo, da.grisaceo)
         da.circleState(stateColor)
 
+        if cv2.waitKey(1) & 0xFF == ord('z'):
+            initialColor = 0
+        if cv2.waitKey(1) & 0xFF == ord('x'):
+            initialColor = 1
+        if cv2.waitKey(1) & 0xFF == ord('c'):
+            initialColor = 2
+
+        if initialColor == 0:
+            ED.getPoint(15, ED.morado, realPoint)
+        elif initialColor == 1:
+            ED.getPoint(15, ED.rojo, realPoint)
+        else:
+            ED.getPoint(15, ED.verde, realPoint)
+
         if cv2.waitKey(1) & 0xFF == ord('s'):
             print("picado")
             if stateColor == 3:
                 stateColor = 4
         if stateColor == 4:
+            #pointsRecorded.append(realPoint)
+            #if cv2.waitKey(1) & 0xFF == ord('d'):
+            #    print("dejado")
+            #    export_file_path = filedialog.asksaveasfilename(initialdir ="Trajectories",defaultextension='.npy')
+            #    np.save(export_file_path, pointsRecorded)
+            #    stateColor = 5
             pointsRecorded.append(realPoint)
+            colorsRecorded.append(initialColor)
             if cv2.waitKey(1) & 0xFF == ord('d'):
-                print("dejado")
-                export_file_path = filedialog.asksaveasfilename(initialdir ="Trajectories",defaultextension='.npy')
+                export_file_path = filedialog.asksaveasfilename(initialdir="Trajectories", defaultextension='.npy')
                 np.save(export_file_path, pointsRecorded)
+                file = getNameFromDirectory(export_file_path)
+                export_file_path_colors = changeWord(export_file_path, file, "Colors", "Colors/")
+                np.save(export_file_path_colors, colorsRecorded)
                 stateColor = 5
         if stateColor == 5:
             remake = cv2.imread("blanco.png")

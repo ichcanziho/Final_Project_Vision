@@ -186,8 +186,7 @@ def drawLayout():
         ED.getPoint(15, ED.verde, coordAux)
 
     if cv2.waitKey(1) & 0xFF == ord('s'):
-        print("picado")
-        #cv2.imwrite("images/snapshot/chido.png", fondo)
+
         if stateColor == 3:
             stateColor = 4
 
