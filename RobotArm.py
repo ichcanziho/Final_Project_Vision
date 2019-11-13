@@ -2,12 +2,15 @@
 
 from armich import*
 import datetime
+import serial, time
+#arduino = serial.Serial("COM11", 9600)
 
 start = False
 canWrite = False
 first = False
 record = False
 pointsRecorded = []
+allPoints=[]
 colorsRecorded = []
 stateColor = 1
 coordSave = [0,0]
@@ -151,9 +154,9 @@ def makeSliders():
     cv2.createTrackbar('Lower', 'Draw', int_lower, 100, nothing)
     cv2.setMouseCallback('Draw', on_mouse, fondo)
 
-
 def drawLayout():
     global canWrite, first,coordSave,stateColor,record,pointsRecorded,arms,initialColor
+    global int_arm_a, int_arm_b, float_scale, int_total_dis, coordSave
     radio = 5
 
     fondo = cv2.imread("blanco.png")
@@ -169,7 +172,8 @@ def drawLayout():
     ED = EasyDraw(fondo, arms)
 
     coordAux = DA.real2aux(coord)
-    message, realPoint = DA.workZone(coordAux)
+    message, realPoint,armLeft,armRight,posLeft,posRight = DA.workZone(coordAux)
+    print(armLeft,armRight)
 
     if cv2.waitKey(1) & 0xFF == ord('z'):
         initialColor = 0
@@ -192,6 +196,8 @@ def drawLayout():
 
     if stateColor == 4:
         #save= [realPoint,initialColor]
+        results = [realPoint[0],realPoint[1],posLeft[0],posLeft[1],armLeft,posRight[0],posRight[1],armRight]
+        allPoints.append(results)
         pointsRecorded.append(realPoint)
         colorsRecorded.append(initialColor)
         #pointsRecorded.append(save)
@@ -204,7 +210,11 @@ def drawLayout():
             np.save(export_file_path_colors, colorsRecorded)
             #dirSS = "images/snapshot/"+save
             #print(dirSS)
-
+            name = getNameFromDirectory(export_file_path)
+            directorio = "Trajectories/Trajectories Public/" + name + ".csv"
+            pd.DataFrame(allPoints).to_csv(directorio, header=None)
+            #directorio = "Trajectories/Trajectories Public/" + name + "Full.csv"
+            #pd.DataFrame(allPoints).to_csv(directorio, header=None)
             stateColor = 5
 
     if stateColor == 5:
@@ -232,6 +242,32 @@ def drawLayout():
         directorio = "images/snapshot/"+name+".png"
         #print(directorio)
         cv2.imwrite(directorio,remake)
+
+
+
+        if arm_A.get() != "":
+            labelA.configure(text='A = ' + arm_A.get())
+            int_arm_a = int(arm_A.get())
+        if arm_B.get() != "":
+            labelB.configure(text='B = ' + arm_B.get())
+            int_arm_b = int(arm_B.get())
+        if scale.get() != "":
+            labelC.configure(text='S = ' + scale.get())
+            float_scale = float(scale.get())
+        int_total_dis = int_arm_a + int_arm_b
+        dict = {"arm_a": [int_arm_a],
+                "arm_b": [int_arm_b],
+                "scale": [float_scale],
+                "distance": [int_total_dis],
+                "UL": [cv2.getTrackbarPos('Upper', 'Draw')],
+                "LL": [cv2.getTrackbarPos('Lower', 'Draw')],
+                "ICX": [coordSave[0]],
+                "ICY": [coordSave[1]]
+                }
+        data = pd.DataFrame(dict)
+        print(data)
+        dirConfig = "Trajectories/configs/" + name + "_Config.csv"
+        data.to_csv(dirConfig, index=None, header=True)
         stateColor=1
 
     if not start:
@@ -271,53 +307,15 @@ def drawLayout():
     
     DA.circleState(stateColor)
 
-    '''
-    if cv2.waitKey(1) & 0xFF == ord('s'):
-        if stateColor == 1 or stateColor == 2 :
-            print("Can´t record")
-        else:
-            print("Record")
-            record = True
-            stateColor = 4
-    if not canWrite:
-        message2 = DA.workZoneColor([0,100], DA.grisaceo, DA.grisaceo)
-
-    DA.circleState(stateColor)
-
-
-
-    if stateColor == 4:
-        pointsRecorded.append(realPoint)
-        if cv2.waitKey(1) & 0xFF == ord('d'):
-            #print("entre chido")
-            export_file_path = filedialog.asksaveasfilename(defaultextension='.npy')
-            np.save(export_file_path, pointsRecorded)
-            stateColor = 5
-
-
-    if canWrite:
-        #print("si")
-        if record == False:
-            cA = np.array(coordAux)
-            cS = np.array(coordSave)
-            #if (cA[0] >= cS[0] * .9 and cA[0] <= cS[0] * 1.1):
-            #    if cA[1] >= cS[1] * .9 and cA[1] <= cS[1] * 1.1:
-            #if coordAux == coordSave:
-            if abs(cA[0]-cS[0])<=radio and abs(cA[1]-cS[1])<=radio:
-                stateColor = 3
-            else:
-                stateColor = 2
-        if first:
-            coordSave = coordAux
-            stateColor=2
-            print(coordSave)
-            first = False
-        message = DA.workZoneColor(coordSave,DA.grisaceo,DA.grisaceo)
-        #canWrite = False
-
-    '''
-        #print(coordAux)
     cv2.putText(fondo, str(coordAux), (10, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.5, azul, lineType=cv2.LINE_AA)
+    '''
+    chido = 57.296*atan2(coordAux[1],coordAux[0])
+    #print(chido)
+    salida = "2,"+str(chido)+","+str(chido)
+    print(salida)
+    arduino.write((str(salida) + "\n").encode('ascii'))
+    '''
+    cv2.putText(fondo, str(10), (20, 280), cv2.FONT_HERSHEY_SIMPLEX, 0.5, azul, lineType=cv2.LINE_AA)
 
     cv2.putText(fondo, message, (10, 260), cv2.FONT_HERSHEY_SIMPLEX, 0.5, azul, lineType=cv2.LINE_AA)
 

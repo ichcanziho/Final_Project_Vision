@@ -34,7 +34,7 @@ window = tk.Tk()
 #the "final" flag indicates if the window is open or not, and I create a "cap" object to capture video
 window.geometry("+500+400")
 final = True
-lbMascara = "Mascara 1"
+lbMascara = "Mask 1"
 intMascara = 1
 cap = cv2.VideoCapture(0)
 #cap2 = cv2.VideoCapture(1)
@@ -170,7 +170,7 @@ def next():
     if intMascara == 4:
         lbMascara = "Final Mask"
     else:
-        lbMascara = "Mascara "+str(intMascara)
+        lbMascara = "Mask "+str(intMascara)
     cv2.setTrackbarPos('Hue Min', 'image', hMin[intMascara - 1])
     cv2.setTrackbarPos('Hue Max', 'image', hMax[intMascara - 1])
     cv2.setTrackbarPos('Sat Min', 'image', sMin[intMascara - 1])
@@ -185,7 +185,7 @@ def prev():
     else:
         intMascara = 1
 
-    lbMascara = "Mascara " + str(intMascara)
+    lbMascara = "Mask " + str(intMascara)
     cv2.setTrackbarPos('Hue Min', 'image', hMin[intMascara - 1])
     cv2.setTrackbarPos('Hue Max', 'image', hMax[intMascara - 1])
     cv2.setTrackbarPos('Sat Min', 'image', sMin[intMascara - 1])
@@ -229,8 +229,12 @@ def show_frame():
 
     else:
 
-        lower = np.array([cv2.getTrackbarPos('Hue Min', 'image'), cv2.getTrackbarPos('Sat Min', 'image'), cv2.getTrackbarPos('Val Min', 'image')])
-        upper = np.array([cv2.getTrackbarPos('Hue Max', 'image'), cv2.getTrackbarPos('Sat Max', 'image'), cv2.getTrackbarPos('Val Max', 'image')])
+        lower = np.array([cv2.getTrackbarPos('Hue Min', 'image'),
+                          cv2.getTrackbarPos('Sat Min', 'image'),
+                          cv2.getTrackbarPos('Val Min', 'image')])
+        upper = np.array([cv2.getTrackbarPos('Hue Max', 'image'),
+                          cv2.getTrackbarPos('Sat Max', 'image'),
+                          cv2.getTrackbarPos('Val Max', 'image')])
 
         binarize = cv2.inRange(hsv, lower, upper)
 
@@ -238,6 +242,7 @@ def show_frame():
 
     # The windows with the original box and the already binarized box are shown as well as the window with the sliders
     # these windows are drawn at a certain screen position
+
     cv2.putText(frame, lbMascara, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), lineType=cv2.LINE_AA)
 
     cv2.imshow("original",frame)
@@ -256,6 +261,7 @@ def show_frame():
         cv2.destroyAllWindows()
         window.destroy()
 #assign the "default, Save, Load, Use this Set, Exit" buttons to their corresponding functions described above
+
 btn_default=tk.Button(window, text="Default", width=50, command=default)
 btn_default.pack(anchor=tk.CENTER, expand=True)
 

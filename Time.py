@@ -7,7 +7,9 @@ fondo = cv2.imread("images/NoiseRef.png",0)
 refeference = cv2.imread("images/ref.png",0)
 
 whiteReff = cv2.countNonZero(refeference)
+noiseReff = cv2.countNonZero(fondo)
 print(whiteReff)
+print(noiseReff)
 
 def setGaussian():
     gauss = cv2.GaussianBlur(fondo, (5, 5), 0)
@@ -35,18 +37,22 @@ def setOpClo():
 
 def getTime(function):
     start_time = time()
-    function()
+    whites = function()
     elapsed_time = time() - start_time
     cv2.destroyAllWindows()
-    return elapsed_time*1000
+    return elapsed_time*1000,whites
 
 def makeArray(function,iterations):
     array = []
+    whites = []
     for i in range(iterations+1):
-        array.append(getTime(function))
+        time,white = getTime(function)
+        array.append(time)
+        whites.append(white)
 
     average = sum(array)/len(array)
-    return array,average
+    averageWhite = sum(whites)/len(whites)
+    return array,average,averageWhite
 
 def getAcc(aprox,exact):
     return 100 - (abs(aprox-exact)/exact*100)
@@ -66,10 +72,11 @@ def autolabel(rects):
                     textcoords="offset points",
                     ha='center', va='bottom')
 
+iteration = 10
 #make arrays for each algorithm and obtain their respective average
-gaussianArray, gaussinAverage = makeArray(setGaussian,10)
-medianArray, medianAverage = makeArray(setMedian,10)
-opCloArray, opCloAverage = makeArray(setOpClo,10)
+gaussianArray, gaussinAverage,GAW = makeArray(setGaussian,iteration)
+medianArray, medianAverage,MAW= makeArray(setMedian,iteration)
+opCloArray, opCloAverage,OCAW = makeArray(setOpClo,iteration)
 
 #show the different times for each iteration in each algorithm
 plt.suptitle('Time List')
@@ -108,6 +115,13 @@ gaussianAcc = setGaussian()
 medianAcc = setMedian()
 opCloAcc = setOpClo()
 
+gaussianAcc = GAW
+medianAcc = MAW
+opCloAcc = OCAW
+
+print(gaussianAcc)
+print(medianAcc)
+print(opCloAcc)
 
 names = ['G ACC', 'M ACC', 'OC ACC']
 names2 = ['G E', 'M E', 'OC E']

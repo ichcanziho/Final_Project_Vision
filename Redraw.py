@@ -3,7 +3,7 @@ from PIL import  Image,ImageTk
 from tkinter import Label
 import time as TIME
 robot = readArms()
-arms = robot.makeArm()
+arms = robot.makeArmDir("Trajectories/configs/default_Config.csv")
 lastTime = -1
 currentTime = 0
 moveChido = False
@@ -18,7 +18,7 @@ def nothing(x):
     pass
 
 def openFile():
-    global  datos,datosLimpioColor
+    global  datos,datosLimpioColor,arms,dataPosition
     open_file = filedialog.askopenfilename(initialdir ="Trajectories")
     datos = np.load(open_file)
 
@@ -35,7 +35,17 @@ def openFile():
     myvar = Label(window, image=tkimage)
     myvar.image = tkimage
     myvar.grid(row=2, column=2)
+    config = "Trajectories/configs/"+file+"_Config.csv"
+    arms = robot.makeArmDir(config)
+    config = "Trajectories/Trajectories Public/" + file + ".csv"
+    dataPosition = pd.read_csv(config)
 
+def sendFile():
+    global dataPosition
+    dataPosition.columns=["iter","px","py","ax","ay","angle1","bx","by","angle2"]
+    #dataPosition.head()
+    for angle1,angle2 in zip(dataPosition["angle1"],dataPosition["angle2"]):
+        print(angle1,angle2)
 
 def play():
     fondo = cv2.imread("blanco.png")
@@ -90,7 +100,7 @@ def update():
     global moveUp, moveDown
     len(datos)
     #fondo = cv2.imread("blanco.png")
-
+    fondo = cv2.imread("blanco.png")
     ED = EasyDraw(fondo, arms)
     #ED = EasyD(fondo, arms)
     time = cv2.getTrackbarPos('Time', ventana)
@@ -154,8 +164,8 @@ if __name__ == "__main__":
     bPlayPath = ttk.Button(window, text="Play Trajectory", command=play).grid(row=1, column=0)
     bPlayArm = ttk.Button(window, text="Play motion", command=motion).grid(row=2, column=0)
     bOpen = ttk.Button(window, text="Open analysis", command=openFile).grid(row=3, column=0)
-
-    ventana = "Recorder"
+    bSend = ttk.Button(window, text="Send to robot", command=sendFile).grid(row=4, column=0)
+    ventana = "Viewer"
     makeSliders()
     update()
 

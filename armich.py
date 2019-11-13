@@ -46,7 +46,7 @@ class DrawArm:
             area = M['m00']
             #cv2.drawContours(self.bgr, c, -1, (0, 0, 255), 3)
             if(area>1000):
-                print(area)
+                #print(area)
 
 
                 #cv2.circle(image, (cX, cY), 2, (255, 255, 255), -1)
@@ -152,7 +152,13 @@ class DrawArm:
             cv2.circle(self.bgr, self.aux2real((x,y)), 10, (255, 0, 255), -1)
             armLeft, armRight = self.getJoint((x,y))
             self.drawArms(armLeft, armRight, (x,y), self.verde,self.azul,self.amarillo)
-            return "OUT UP" , (x,y)
+            angle4armLeft = 57.296 * atan2(armLeft[1], armLeft[0])
+            if angle4armLeft < 0:
+                angle4armLeft += 360
+            angle4armRight = 57.296 * atan2(armRight[1], armRight[0])
+            if angle4armRight<0:
+                angle4armRight = angle4armRight + 360
+            return "OUT UP" , (x,y),angle4armLeft,angle4armRight,armLeft,armRight
         elif dis < LL:
             x = int(cos(angle * self.deg2grad) * LL)
             y = int(sin(angle * self.deg2grad) * LL)
@@ -160,12 +166,24 @@ class DrawArm:
             cv2.circle(self.bgr, self.aux2real((x, y)), 10, (255, 0, 255), -1)
             armLeft, armRight = self.getJoint((x, y))
             self.drawArms(armLeft, armRight, (x, y), self.verde,self.azul,self.amarillo)
-            return "OUT IN" , (x,y)
+            angle4armLeft = 57.296 * atan2(armLeft[1], armLeft[0])
+            if angle4armLeft < 0:
+                angle4armLeft += 360
+            angle4armRight = 57.296 * atan2(armRight[1], armRight[0])
+            if angle4armRight<0:
+                angle4armRight = angle4armRight + 360
+            return "OUT IN" , (x,y),angle4armLeft,angle4armRight,armLeft,armRight
         else:
             cv2.circle(self.bgr, self.aux2real(POI), 10, (255, 0, 255), -1)
             armLeft, armRight = self.getJoint(POI)
             self.drawArms(armLeft, armRight, POI, self.verde,self.azul,self.amarillo)
-            return "ok" , (POI)
+            angle4armLeft = 57.296*atan2(armLeft[1],armLeft[0])
+            if angle4armLeft<0:
+                angle4armLeft = angle4armLeft+360
+            angle4armRight = 57.296 * atan2(armRight[1], armRight[0])
+            if angle4armRight<0:
+                angle4armRight = angle4armRight+360
+            return "ok" , (POI),angle4armLeft,angle4armRight,armLeft,armRight
 
     def distance(self,p1, p2):
         return sqrt(pow(p2[0] - p1[0], 2) + pow(p2[1] - p1[1], 2))
@@ -192,15 +210,22 @@ class DrawArm:
 
     def getJoint(self,POI):
         angleRO =self.getAngle(POI)
+
         distanceRO = self.distance(self.o_aux,POI)
         alfa = self.getAlfa(distanceRO)
+
         beta = self.getBeta(distanceRO)
         gamma = self.getGamma(alfa,beta)
+
         alfaRO = alfa+angleRO
         gammaRO = angleRO-alfa
         xbrazo1 = int(round(self.armA * cos(alfaRO * self.deg2grad), 0))
         ybrazo1 = int(round(self.armA * sin(alfaRO * self.deg2grad), 0))
+
         brazo1= (xbrazo1, ybrazo1)
+
+
+
         xbrazo2 = int(round(self.armA * cos(gammaRO * self.deg2grad), 0))
         ybrazo2 = int(round(self.armA * sin(gammaRO * self.deg2grad), 0))
         brazo2 = (xbrazo2,ybrazo2)
@@ -211,7 +236,6 @@ class DrawArm:
         cv2.line(self.bgr, self.o_real, self.aux2real(brazoA), color, 2, cv2.LINE_AA)
         cv2.circle(self.bgr, self.aux2real(brazoA), int(6), color3, -1, cv2.LINE_AA)
         cv2.line(self.bgr, self.aux2real(brazoA), self.aux2real(POI), color2, 2, cv2.LINE_AA)
-
         cv2.line(self.bgr, self.o_real, self.aux2real(brazoB), color2, 2, cv2.LINE_AA)
         cv2.circle(self.bgr, self.aux2real(brazoB), int(6), color3, -1, cv2.LINE_AA)
         cv2.line(self.bgr, self.aux2real(brazoB), self.aux2real(POI), color, 2, cv2.LINE_AA)
@@ -258,6 +282,19 @@ class readArms:
         iniCoord = [icx,icy]
         return (arm_a,arm_b,scale,distance,ul,ll,iniCoord)
 
+    def makeArmDir(self,direction):
+        dataArm = pd.read_csv(direction)
+        arm_a = por2pix(dataArm.arm_a[0])
+        arm_b = por2pix(dataArm.arm_b[0])
+        scale = dataArm.scale[0]
+        distance = por2pix(dataArm.distance[0])
+        ul = por2pix(dataArm.UL[0])
+        ll = por2pix(dataArm.LL[0])
+        icx = dataArm.ICX[0]
+        icy = dataArm.ICY[0]
+        iniCoord = [icx, icy]
+        return (arm_a, arm_b, scale, distance, ul, ll, iniCoord)
+
 class readHSV:
     def __init__(self):
         pass
@@ -276,6 +313,9 @@ class readHSV:
 
 def por2pix(dis):
     return int((235*dis)/100)
+
+def pix2por(dis):
+    return int((dis*100)/255)
 
 def CVTRGB2HSV(rgb):
     r =  rgb[0]/255
