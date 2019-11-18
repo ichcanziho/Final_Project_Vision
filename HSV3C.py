@@ -20,6 +20,8 @@ from tkinter import filedialog
 from PIL import Image
 from PIL import ImageTk
 import pandas as pd
+
+
 datahsv = pd.read_csv("calibrations/colors/current/current.csv")
 
 hMin = [datahsv.hMin[0],datahsv.hMin[1],datahsv.hMin[2],0]
@@ -36,7 +38,9 @@ window.geometry("+500+400")
 final = True
 lbMascara = "Mask 1"
 intMascara = 1
-cap = cv2.VideoCapture(0)
+camaraLap = 0
+camaraUsb = 1
+cap = cv2.VideoCapture(camaraUsb)
 #cap2 = cv2.VideoCapture(1)
 # sliders or bars that are created using openCV "createTrackbar" need a call to a function to do something
 #in this case the "nothing" function only occupies "pass" to indicate that the function is null
@@ -89,13 +93,34 @@ def save():
 #default returns all the sliders values to their initial default position, these values can be modified
 #in the default.csv file
 def default():
-    datahsv = pd.read_csv("default.csv")
+    global hMin, hMax, sMin, sMax, vMin, vMax
+    datahsv = pd.read_csv("calibrations/colors/user profile/Default.csv")
     cv2.setTrackbarPos('Hue Min', 'image', datahsv.hMin[0])
     cv2.setTrackbarPos('Hue Max', 'image', datahsv.hMax[0])
     cv2.setTrackbarPos('Sat Min', 'image', datahsv.sMin[0])
     cv2.setTrackbarPos('Sat Max', 'image', datahsv.sMax[0])
     cv2.setTrackbarPos('Val Min', 'image', datahsv.vMin[0])
     cv2.setTrackbarPos('Val Max', 'image', datahsv.vMax[0])
+    hMin[0] = datahsv.hMin[0]
+    hMax[0] = datahsv.hMax[0]
+    sMin[0] = datahsv.sMin[0]
+    sMax[0] = datahsv.sMax[0]
+    vMin[0] = datahsv.vMin[0]
+    vMax[0] = datahsv.vMax[0]
+
+    hMin[1] = datahsv.hMin[1]
+    hMax[1] = datahsv.hMax[1]
+    sMin[1] = datahsv.sMin[1]
+    sMax[1] = datahsv.sMax[1]
+    vMin[1] = datahsv.vMin[1]
+    vMax[1] = datahsv.vMax[1]
+
+    hMin[2] = datahsv.hMin[2]
+    hMax[2] = datahsv.hMax[2]
+    sMin[2] = datahsv.sMin[2]
+    sMax[2] = datahsv.sMax[2]
+    vMin[2] = datahsv.vMin[2]
+    vMax[2] = datahsv.vMax[2]
 #as its name indicates "load" loads a CSV file to occupy that masking profile in the same way it uses
 # filedialog.askopenfilename () of tikinter to occupy the windows file explorer
 def load():
@@ -228,6 +253,7 @@ def show_frame():
         binarize = cv2.add(binarize, mask3)
 
     else:
+
 
         lower = np.array([cv2.getTrackbarPos('Hue Min', 'image'),
                           cv2.getTrackbarPos('Sat Min', 'image'),

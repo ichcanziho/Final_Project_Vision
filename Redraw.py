@@ -2,6 +2,14 @@ from armich import *
 from PIL import  Image,ImageTk
 from tkinter import Label
 import time as TIME
+import serial
+try:
+    arduino = serial.Serial("COM9", 9600)
+    print("Connect")
+    TIME.sleep(1)
+    print("ready")
+except:
+    print("can't connect")
 robot = readArms()
 arms = robot.makeArmDir("Trajectories/configs/default_Config.csv")
 lastTime = -1
@@ -45,7 +53,14 @@ def sendFile():
     dataPosition.columns=["iter","px","py","ax","ay","angle1","bx","by","angle2"]
     #dataPosition.head()
     for angle1,angle2 in zip(dataPosition["angle1"],dataPosition["angle2"]):
-        print(angle1,angle2)
+        salida = "2,"+str(angle2)+","+str(angle1)
+        print(salida)
+        TIME.sleep(0.02)
+        try:
+            arduino.write((str(salida) + "\n").encode('ascii'))
+        except:
+            print("can't send")
+
 
 def play():
     fondo = cv2.imread("blanco.png")

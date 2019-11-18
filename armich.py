@@ -5,6 +5,7 @@ import pandas as pd
 import cv2
 import numpy as np
 from math import sqrt,atan2,pi,asin,sin,cos,acos
+
 class DrawArm:
 
     def __init__(self, bgr, robot,tonos):
@@ -143,12 +144,9 @@ class DrawArm:
         UL = self.UL
         LL = self.LL
         angle = self.getAngle(POI)
-
-        #print("Angle:",angle,"Cosx:",x,"Sinx:",y)
         if dis > UL:
             x = int(cos(angle * self.deg2grad) * UL)
             y = int(sin(angle * self.deg2grad) * UL)
-            #print(POI,"-",[x,y])
             cv2.circle(self.bgr, self.aux2real((x,y)), 10, (255, 0, 255), -1)
             armLeft, armRight = self.getJoint((x,y))
             self.drawArms(armLeft, armRight, (x,y), self.verde,self.azul,self.amarillo)
@@ -210,22 +208,15 @@ class DrawArm:
 
     def getJoint(self,POI):
         angleRO =self.getAngle(POI)
-
         distanceRO = self.distance(self.o_aux,POI)
         alfa = self.getAlfa(distanceRO)
-
         beta = self.getBeta(distanceRO)
         gamma = self.getGamma(alfa,beta)
-
         alfaRO = alfa+angleRO
         gammaRO = angleRO-alfa
         xbrazo1 = int(round(self.armA * cos(alfaRO * self.deg2grad), 0))
         ybrazo1 = int(round(self.armA * sin(alfaRO * self.deg2grad), 0))
-
         brazo1= (xbrazo1, ybrazo1)
-
-
-
         xbrazo2 = int(round(self.armA * cos(gammaRO * self.deg2grad), 0))
         ybrazo2 = int(round(self.armA * sin(gammaRO * self.deg2grad), 0))
         brazo2 = (xbrazo2,ybrazo2)
@@ -311,6 +302,18 @@ class readHSV:
         upper3 = np.array([datahsv.hMax[2], datahsv.sMax[2], datahsv.vMax[2]])
         return (lower1,upper1,lower2,upper2,lower3,upper3)
 
+class EasyDraw(DrawArm):
+    azul,rojo,verde,amarillo,morado,blanco  = (255, 0, 0),(0, 0, 255),(0, 255, 0),(0, 255, 255),(255, 0, 255),(255, 255, 255)
+    def __init__(self,bgr,robot):
+        DrawArm.__init__(self,bgr,robot,[0,0,0,0,0,0])
+
+    def drawRobot(self,poi):
+        armLeft, armRight = self.getJoint(poi)
+        self.drawArms(armLeft, armRight, poi, self.verde, self.azul, self.amarillo)
+
+    def getPoint(self,tk,color,point):
+        cv2.circle(self.bgr, self.aux2real(point), tk, color, -1)
+
 def por2pix(dis):
     return int((235*dis)/100)
 
@@ -340,18 +343,6 @@ def CVTRGB2HSV(rgb):
     v = Cmax*100
 
     return round(h,1),round(s,1),round(v,1)
-
-class EasyDraw(DrawArm):
-    azul,rojo,verde,amarillo,morado,blanco  = (255, 0, 0),(0, 0, 255),(0, 255, 0),(0, 255, 255),(255, 0, 255),(255, 255, 255)
-    def __init__(self,bgr,robot):
-        DrawArm.__init__(self,bgr,robot,[0,0,0,0,0,0])
-
-    def drawRobot(self,poi):
-        armLeft, armRight = self.getJoint(poi)
-        self.drawArms(armLeft, armRight, poi, self.verde, self.azul, self.amarillo)
-
-    def getPoint(self,tk,color,point):
-        cv2.circle(self.bgr, self.aux2real(point), tk, color, -1)
 
 def getNameFromDirectory(s):
     z = s[::-1]

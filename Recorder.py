@@ -1,8 +1,20 @@
 from armich import*
+import datetime
+import serial, time
+try:
+    arduino = serial.Serial("COM9", 9600)
+    print("Connect")
+    time.sleep(1)
+    print("ready")
+except:
+    print("can't connect")
 puntos,distancias,angulos,angulos2,joints1,joints2 = [],[],[],[],[],[]
 pointsRecorded=[]
 colorsRecorded=[]
 allPoints=[]
+rojo,azul,verde,negro,amarillo = (0,0,255),(255,0,0),(0,255,0),(0,0,0),(0,255,255)
+freq = 20
+wait = 1/freq
 mask = readHSV()
 robot = readArms()
 global arms
@@ -10,6 +22,7 @@ arms = robot.makeArm()
 print(arms)
 stateColor = 1
 initialColor = 0
+blink_move = False
 start,canWrite = False, False
 radio = 5
 coordInit = arms[6]
@@ -19,7 +32,9 @@ tones = mask.makeMask()
 longitud_brazo = 160
 
 #video = cv2.VideoCapture("bolaVerde.wmv")
-video = cv2.VideoCapture(0)
+camaraLap = 0
+camaraUsb = 1
+video = cv2.VideoCapture(camaraUsb)
 _, fondo = video.read()
 lastPOI = [0,0]
 while(1):
@@ -43,6 +58,24 @@ while(1):
             initialColor = 1
         if cv2.waitKey(1) & 0xFF == ord('c'):
             initialColor = 2
+        if cv2.waitKey(1) & 0xFF == ord('a'):
+            blink_move = not blink_move
+        if blink_move:
+            # cv2.putText(fondo, "Follow: ON", (10, 440), cv2.FONT_HERSHEY_SIMPLEX, 0.5, azul, lineType=cv2.LINE_AA)
+            cv2.circle(da.bgr, da.aux2real([-270, 220]), int(10), da.verde, -1, cv2.LINE_AA)
+            armLeft = int(armLeft)
+            armRight = int(armRight)
+            salida = "2," + str(armRight) + "," + str(armLeft)
+            cv2.putText(fondo, salida, (10, 440), cv2.FONT_HERSHEY_SIMPLEX, 0.5, azul, lineType=cv2.LINE_AA)
+            startTime = time.time()
+            elapsed = time.time() - startTime
+            if elapsed <= wait:
+                time.sleep(wait - elapsed)
+            print(salida)
+            try:
+                arduino.write((str(salida) + "\n").encode('ascii'))
+            except:
+                print("can't send")
 
         if initialColor == 0:
             ED.getPoint(15, ED.morado, realPoint)

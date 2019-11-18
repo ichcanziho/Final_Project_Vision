@@ -3,9 +3,17 @@
 from armich import*
 import datetime
 import serial, time
-#arduino = serial.Serial("COM11", 9600)
-
+try:
+    arduino = serial.Serial("COM9", 9600)
+    print("Connect")
+    time.sleep(1)
+    print("ready")
+except:
+    print("can't connect")
 start = False
+freq = 50
+wait = 1/freq
+blink_move = False
 canWrite = False
 first = False
 record = False
@@ -156,11 +164,11 @@ def makeSliders():
 
 def drawLayout():
     global canWrite, first,coordSave,stateColor,record,pointsRecorded,arms,initialColor
-    global int_arm_a, int_arm_b, float_scale, int_total_dis, coordSave
+    global int_arm_a, int_arm_b, float_scale, int_total_dis, coordSave, blink_move, wait
     radio = 5
 
     fondo = cv2.imread("blanco.png")
-
+    print(stateColor)
 
     cv2.line(fondo, (0, h), (2 * w, h), negro, 1, cv2.LINE_AA)
     cv2.line(fondo, (w, 0), (w, 2 * h), negro, 1, cv2.LINE_AA)
@@ -173,7 +181,7 @@ def drawLayout():
 
     coordAux = DA.real2aux(coord)
     message, realPoint,armLeft,armRight,posLeft,posRight = DA.workZone(coordAux)
-    print(armLeft,armRight)
+    #print(armLeft,armRight)
 
     if cv2.waitKey(1) & 0xFF == ord('z'):
         initialColor = 0
@@ -189,8 +197,39 @@ def drawLayout():
     else:
         ED.getPoint(15, ED.verde, coordAux)
 
-    if cv2.waitKey(1) & 0xFF == ord('s'):
+    if cv2.waitKey(1) & 0xFF == ord('a'):
+        blink_move = not blink_move
 
+    #if stateColor == 1 or stateColor == 2 or stateColor == 3:
+
+    if blink_move:
+            #cv2.putText(fondo, "Follow: ON", (10, 440), cv2.FONT_HERSHEY_SIMPLEX, 0.5, azul, lineType=cv2.LINE_AA)
+            cv2.circle(DA.bgr, DA.aux2real([-270, 220]), int(10), DA.verde, -1, cv2.LINE_AA)
+            armLeft = int(armLeft)
+            armRight = int(armRight)
+            salida = "2," + str(armRight) + "," + str(armLeft)
+            cv2.putText(fondo, salida, (10, 440), cv2.FONT_HERSHEY_SIMPLEX, 0.5, azul, lineType=cv2.LINE_AA)
+            startTime = time.time()
+            elapsed = time.time() - startTime
+            if elapsed <= wait:
+                time.sleep(wait - elapsed)
+            print(salida)
+            if stateColor == 5:
+                blink_move = not blink_move
+
+            try:
+
+                arduino.write((str(salida) + "\n").encode('ascii'))
+            except:
+                print("can't send")
+    #else:
+    #        #cv2.putText(fondo, "Follow: OFF", (10, 440), cv2.FONT_HERSHEY_SIMPLEX, 0.5, azul, lineType=cv2.LINE_AA)
+    #        try:
+    #            arduino.close()
+    #        except:
+    #            print("not available")
+
+    if cv2.waitKey(1) & 0xFF == ord('s'):
         if stateColor == 3:
             stateColor = 4
 
@@ -315,9 +354,9 @@ def drawLayout():
     print(salida)
     arduino.write((str(salida) + "\n").encode('ascii'))
     '''
-    cv2.putText(fondo, str(10), (20, 280), cv2.FONT_HERSHEY_SIMPLEX, 0.5, azul, lineType=cv2.LINE_AA)
+    #cv2.putText(fondo, str(10), (20, 280), cv2.FONT_HERSHEY_SIMPLEX, 0.5, azul, lineType=cv2.LINE_AA)
 
-    cv2.putText(fondo, message, (10, 260), cv2.FONT_HERSHEY_SIMPLEX, 0.5, azul, lineType=cv2.LINE_AA)
+    #cv2.putText(fondo, message, (10, 260), cv2.FONT_HERSHEY_SIMPLEX, 0.5, azul, lineType=cv2.LINE_AA)
 
 
     if posUpperSlider>90:
